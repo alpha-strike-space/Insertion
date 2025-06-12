@@ -9,6 +9,7 @@
 
 using json = nlohmann::json;
 // Direct Connection
+// Note when using cron jobs, profile is not sourcable. You must find a solution for sourcing the environment variables as it will not work.
 std::string get_direct_connection_string() {
     const char* dbname = std::getenv("PGDIRECT_DB");
     const char* user = std::getenv("PGDIRECT_USER");
