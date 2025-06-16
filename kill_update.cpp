@@ -10,7 +10,7 @@
 using json = nlohmann::json;
 // Direct Connection
 // Note when using cron jobs, profile is not sourcable. You must find a solution for sourcing the environment variables as it will not work.
-std::string get_direct_connection_string() {
+/*std::string get_direct_connection_string() {
     const char* dbname = std::getenv("PGDIRECT_DB");
     const char* user = std::getenv("PGDIRECT_USER");
     const char* password = std::getenv("PGDIRECT_PASSWORD");
@@ -26,7 +26,7 @@ std::string get_direct_connection_string() {
            " password=" + std::string(password) +
            " host=" + std::string(host) +
            " port=" + std::string(port);
-}
+}*/
 // Callback function for cURL response handling
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     ((std::string*)userp)->append((char*)contents, size * nmemb);
@@ -36,7 +36,8 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
 int main() {
     try {
         // PostgreSQL connection details
-        pqxx::connection C(get_direct_connection_string());
+        // get_direct_connection_string() may be substituted depending on how you approach cycling this file.
+        pqxx::connection C("dbname= user= password= host= port=");
         if (C.is_open()) {
             std::cout << "Opened database successfully: " << C.dbname() << std::endl;
         } else {
