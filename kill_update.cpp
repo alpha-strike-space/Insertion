@@ -48,9 +48,9 @@ int main() {
         // Prepare statement for inserting incidents with conflict resolution
         C.prepare("insert_incident",
                     "INSERT INTO incident "
-                    "(victim_id, victim_address, victim_name, killer_id, killer_address, killer_name, solar_system_id, loss_type, time_stamp) "
-                    "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) "
-                    "ON CONFLICT (victim_name, time_stamp) DO NOTHING;");
+                    "(id, victim_id, victim_address, victim_name, killer_id, killer_address, killer_name, solar_system_id, loss_type, time_stamp) "
+                    "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) "
+                    "ON CONFLICT (id) DO NOTHING;");
 
         pqxx::work W(C);
 
@@ -85,13 +85,23 @@ int main() {
 
                 // Insert each incident in the "data" array
                 for (const auto& incident : response["data"]) {
+                    // Extract the incident id from the JSON
+                    int incidentId = incident.value("id", -1);
+                    if (incidentId == -1) {
+                        std::cerr << "Incident missing ID!" << std::endl;
+                        continue;
+                    }
+                    std::cout << "Processing incident id: " << incidentId << std::endl;
                     // Strip CCP time to UNIX
                     std::string time_str = incident["time"].get<std::string>();
                     struct tm tm = {};
                     strptime(time_str.c_str(), "%Y-%m-%dT%H:%M:%SZ", &tm);
                     time_t unix_time = timegm(&tm);
+                    // Retrieve lossType using .value() to provide a default value if not present
+                    std::string lossType = incident.value("lossType", "Ship");
                     // JSON to INSERT
                     W.exec_prepared("insert_incident",
+                        incidentId,
                         incident["victim"]["id"].get<std::string>(),
                         incident["victim"]["address"].get<std::string>(),
                         incident["victim"]["name"].get<std::string>(),
@@ -99,7 +109,7 @@ int main() {
                         incident["killer"]["address"].get<std::string>(),
                         incident["killer"]["name"].get<std::string>(),
                         incident["solarSystemId"].get<int>(),
-                        incident["lossType"].get<std::string>(),
+                        lossType,
                         static_cast<long long>(unix_time) // UNIX timestamp
                     );
                 }
