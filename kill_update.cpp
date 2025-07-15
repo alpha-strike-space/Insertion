@@ -94,7 +94,7 @@ int main() {
         );
         // Go for insertion into table.
         for (const auto& e : entries) {
-            txn.exec_prepared("insert_incident", e.killMailId, e.killerCharacterId, e.victimCharacterId, e.lossType, e.solarSystemId, e.killTimestamp).exec();
+            txn.exec_prepared("insert_incident", e.killMailId, e.killerCharacterId, e.victimCharacterId, e.lossType, e.solarSystemId, e.killTimestamp);
         }
         // Commit Transaction
         txn.commit();
