@@ -94,7 +94,7 @@ int main() {
         );
         // Go for insertion into table.
         for (const auto& e : entries) {
-            txn.prepared("insert_incident")
+            txn.exec_prepared("insert_incident")
                 (e.killMailId)
                 (e.killerCharacterId)
                 (e.victimCharacterId)
