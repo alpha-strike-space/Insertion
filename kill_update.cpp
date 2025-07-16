@@ -93,8 +93,8 @@ int main() {
             "ON CONFLICT (id) DO NOTHING"
         );
         // Go for insertion into table.
-        for (const auto& e : entries) {
-            txn.exec_prepared("insert_incident", e.killMailId, e.killerCharacterId, e.victimCharacterId, e.lossType, e.solarSystemId, e.killTimestamp);
+        for (const auto& incident : entries) {
+            txn.exec_prepared("insert_incident", incident.killMailId, incident.killerCharacterId, incident.victimCharacterId, incident.lossType, incident.solarSystemId, incident.killTimestamp);
         }
         // Commit Transaction
         txn.commit();
