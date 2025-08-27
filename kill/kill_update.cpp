@@ -40,7 +40,7 @@ int main() {
     CURLcode res;
     struct curl_slist* headers = NULL;
     // Post SQL Query to Mud Index
-    std::string data = R"([{"address":"0xcdb380e0cd3949caf70c45c67079f2e27a77fc47","query":"SELECT \"evefrontier__KillMail\".\"killMailId\" AS \"killMailId\", \"evefrontier__KillMail\".\"killerCharacterId\" AS \"killerCharacterId\", \"evefrontier__KillMail\".\"victimCharacterId\" AS \"victimCharacterId\", \"evefrontier__KillMail\".\"lossType\" AS \"lossType\", \"evefrontier__KillMail\".\"solarSystemId\" AS \"solarSystemId\", \"evefrontier__KillMail\".\"killTimestamp\" AS \"killTimestamp\" FROM \"evefrontier__KillMail\" ORDER BY \"killMailId\" ASC"}])";
+    std::string data = R"([{"address":"0x7085f3e652987f656fb8dee5aa6592197bb75de8","query":"SELECT \"evefrontier__KillMail\".\"killMailId\" AS \"killMailId\", \"evefrontier__KillMail\".\"killerCharacterId\" AS \"killerCharacterId\", \"evefrontier__KillMail\".\"victimCharacterId\" AS \"victimCharacterId\", \"evefrontier__KillMail\".\"lossType\" AS \"lossType\", \"evefrontier__KillMail\".\"solarSystemId\" AS \"solarSystemId\", \"evefrontier__KillMail\".\"killTimestamp\" AS \"killTimestamp\" FROM \"evefrontier__KillMail\" ORDER BY \"killMailId\" ASC"}])";
     std::string response_string;
     // Make curl.
     curl_global_init(CURL_GLOBAL_ALL);
