@@ -1,0 +1,61 @@
+services:
+  # Database
+  postgresql_proxy:
+    image: postgres:latest
+    restart: always
+    build: ./
+    container_name: running_postgresql
+    environment:
+      - POSTGRES_USER=test_user
+      - POSTGRES_DB=test_db
+      - POSTGRES_PASSWORD=TEST
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres:/var/lib/postgresql/data
+    networks:
+      - postgres-network
+  # Pull new mails every five minutes from Mud Index.
+  kill_proxy:
+    build: ./kill
+    container_name: running_kills
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: always
+    networks:
+      - postgres-network
+    depends_on:
+      - postgresql_proxy
+  # Pull new characters every hour on the hour from the World API.
+  character_proxy:
+    build: ./character
+    container_name: running_characters
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: always
+    networks:
+      - postgres-network
+    depends_on:
+      - postgresql_proxy
+  # Pull new tribes and update characters once a day
+  tribes_proxy:
+    build: ./tribes
+    container_name: running_tribes
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: always
+    networks:
+      - postgres-network
+    depends_on:
+      - postgresql_proxy
+  # Interal Networks
+  networks:
+    postgres-network:
+      driver: bridge
+  # Storage
+  volumes:
+    postgres:
+      driver: local
