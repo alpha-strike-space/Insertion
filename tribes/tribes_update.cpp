@@ -5,6 +5,7 @@
 #include <sstream>
 #include <cstdlib> // For getenv
 #include <string>
+#include <unordered_map>
 // Making life easy with namespace
 using json = nlohmann::json;
 // Direct Connection
@@ -45,6 +46,10 @@ int main() {
         // Prepare statement for setting tribe_id by address
         C.prepare("update_character_tribe",
             "UPDATE character SET tribe_id = $2 WHERE address = $1");
+        // Prepare statement for upserting tribe id, url, and name
+        C.prepare("upsert_tribe",
+            "INSERT INTO tribe (id, tribe_url, name) VALUES ($1, $2, $3) "
+            "ON CONFLICT (id) DO UPDATE SET tribe_url = EXCLUDED.tribe_url, name = EXCLUDED.name");
         pqxx::work W(C);
         // Pagination variables
         const int limit = 100;
@@ -79,6 +84,14 @@ int main() {
                 // For each tribe, fetch its members and map address to tribe id
                 for (const auto& tribe : response["data"]) {
                     long long tribeId = tribe["id"].get<long long>();
+                    std::string tribeUrl = tribe["tribeUrl"].get<std::string>();
+                    // If empty, NONE
+                    if (tribeUrl.empty()) {
+                        tribeUrl = "NONE";
+                    }
+                    std::string tribeName = tribe["name"].get<std::string>();
+                    // Upsert tribe info into tribe table
+                    W.exec_prepared("upsert_tribe", tribeId, tribeUrl, tribeName);
                     // Fetch tribe details like members
                     std::string tribeDetailBuffer;
                     CURL* tribeCurl = curl_easy_init();
