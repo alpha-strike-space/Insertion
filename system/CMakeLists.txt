@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find required packages before using their variables
 find_package(PostgreSQL REQUIRED)
+find_package(CURL REQUIRED)  # <----- Added for cURL support
 # We will use the FetchContent to download our necessary repositories for the libraries we shall use.
 include(FetchContent)
 # FetchContent to download the libpqxx library for us to use.
@@ -45,6 +46,7 @@ target_include_directories(update_systems PRIVATE
     ${libpqxx_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${PostgreSQL_INCLUDE_DIRS}
+    ${CURL_INCLUDE_DIRS}
 )
 # Target libraries. Use pqxx::pqxx if available, otherwise fallback.
 if(TARGET pqxx::pqxx)
@@ -57,4 +59,5 @@ target_link_libraries(server PRIVATE
     nlohmann_json::nlohmann_json
     ${PQXX_TARGET}
     ${PostgreSQL_LIBRARIES}
+    CURL::libcurl 
 )
