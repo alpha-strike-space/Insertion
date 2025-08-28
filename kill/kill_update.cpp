@@ -35,7 +35,7 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
 }
 // Main Parse and Database Entry
 int main() {
-    // === CURL PART: Get JSON from the API ===
+    // Using cURL library to get information from the Mud Index based on World Address.
     CURL* curl;
     CURLcode res;
     struct curl_slist* headers = NULL;
@@ -63,7 +63,7 @@ int main() {
     if (response_string.rfind(prefix, 0) == 0) {
         response_string = response_string.substr(prefix.size());
     }
-    // === JSON PARSE PART ===
+    // Json Parsing
     json j;
     try {
         j = json::parse(response_string);
@@ -115,7 +115,7 @@ int main() {
     }
     // Tell me what program did.
     std::cout << "Parsed " << entries.size() << " killmails, inserting into database..." << std::endl;
-    // === POSTGRESQL PART ===
+    // Try/catch block for insertion
     try {
         // Adjust connection string as needed for your DB
         pqxx::connection c(/*"host= dbname= user= password="*/);
