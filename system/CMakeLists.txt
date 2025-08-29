@@ -5,8 +5,8 @@ project(SystemUpdate) # Create the Project
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Find required packages before using their variables
-find_package(PostgreSQL REQUIRED)
-find_package(CURL REQUIRED)  # <----- Added for cURL support
+find_package(PostgreSQL REQUIRED) #  PostgreSQL : Must Install
+find_package(CURL REQUIRED)  # cURL : Must Install
 # We will use the FetchContent to download our necessary repositories for the libraries we shall use.
 include(FetchContent)
 # FetchContent to download the libpqxx library for us to use.
@@ -61,3 +61,9 @@ target_link_libraries(server PRIVATE
     ${PostgreSQL_LIBRARIES}
     CURL::libcurl 
 )
+# NOTE:
+# You must run the target executable on the system as a service for continuity.
+# mkdir build
+# cd build
+# cmake ..
+# make
