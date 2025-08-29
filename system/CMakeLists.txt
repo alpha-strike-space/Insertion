@@ -55,7 +55,7 @@ else()
     set(PQXX_TARGET pqxx)
 endif()
 # Link all libraries
-target_link_libraries(server PRIVATE
+target_link_libraries(update_systems PRIVATE
     nlohmann_json::nlohmann_json
     ${PQXX_TARGET}
     ${PostgreSQL_LIBRARIES}
