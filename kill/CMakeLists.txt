@@ -39,9 +39,9 @@ set(SOURCES
     kill_update.cpp
 )
 # Put together
-add_executable(update_kills ${SOURCES})
+add_executable(killers ${SOURCES})
 # Includes from dependencies
-target_include_directories(update_kills PRIVATE
+target_include_directories(killers PRIVATE
     ${nlohmann_json_SOURCE_DIR}/single_include
     ${libpqxx_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -55,7 +55,7 @@ else()
     set(PQXX_TARGET pqxx)
 endif()
 # Link all libraries
-target_link_libraries(kills PRIVATE
+target_link_libraries(killers PRIVATE
     nlohmann_json::nlohmann_json
     ${PQXX_TARGET}
     ${PostgreSQL_LIBRARIES}
