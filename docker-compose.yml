@@ -28,8 +28,8 @@ services:
     depends_on:
       - postgresql_proxy
   # Pull new characters every hour on the hour from the World API.
-  character_proxy:
-    build: ./character
+  characters_proxy:
+    build: ./characters
     container_name: running_characters
     dns:
       - 8.8.8.8
@@ -43,6 +43,18 @@ services:
   tribes_proxy:
     build: ./tribes
     container_name: running_tribes
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
+    restart: always
+    networks:
+      - postgres-network
+    depends_on:
+      - postgresql_proxy
+        # Pull new tribes and update characters once a day
+  systems_proxy:
+    build: ./system
+    container_name: running_systems
     dns:
       - 8.8.8.8
       - 8.8.4.4
