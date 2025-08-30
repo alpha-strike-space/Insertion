@@ -1,4 +1,35 @@
 /*
+  Tribe table, includes relevant id, url, and name.
+*/
+CREATE TABLE tribe (
+    id BIGINT PRIMARY KEY,
+    tribe_url TEXT,
+    name TEXT
+);
+/*
+  Character table
+*/
+CREATE TABLE character (
+    address BYTEA PRIMARY KEY, -- blockchain address
+    name VARCHAR(255),
+    id NUMERIC(78) UNIQUE,            
+    tribe_id BIGINT REFERENCES tribe(id)  -- tribe_id may be nullable
+);
+/*
+  Create systems table.
+*/
+CREATE TABLE IF NOT EXISTS systems
+(
+   id SERIAL PRIMARY KEY,
+   region_id BIGINT,
+   constellation_id BIGINT,
+   solar_system_id BIGINT UNIQUE,
+   solar_system_name TEXT,
+   x DOUBLE PRECISION,
+   y DOUBLE PRECISION,
+   z DOUBLE PRECISION
+);
+/*
   Create verifiable incident table.
 */
 CREATE TABLE incident (
@@ -14,37 +45,6 @@ CREATE TABLE incident (
     CONSTRAINT fk_victim_character FOREIGN KEY (victim_id) REFERENCES characters (id),
     CONSTRAINT fk_killer_character FOREIGN KEY (killer_id) REFERENCES characters (id),
     CONSTRAINT fk_incident_solar_system FOREIGN KEY (solar_system_id) REFERENCES systems (solar_system_id)
-);
-/*
-  Character table
-*/
-CREATE TABLE character (
-    address BYTEA PRIMARY KEY, -- blockchain address
-    name VARCHAR(255),
-    id NUMERIC(78) UNIQUE,            
-    tribe_id BIGINT REFERENCES tribe(id)  -- tribe_id may be nullable
-);
-/*
-  Tribe table, includes relevant id, url, and name.
-*/
-CREATE TABLE tribe (
-    id BIGINT PRIMARY KEY,
-    tribe_url TEXT,
-    name TEXT
-);
-/*
-  Create systems table.
-*/
-CREATE TABLE IF NOT EXISTS systems
-(
-   id SERIAL PRIMARY KEY,
-   region_id BIGINT,
-   constellation_id BIGINT,
-   solar_system_id BIGINT UNIQUE,
-   solar_system_name TEXT,
-   x DOUBLE PRECISION,
-   y DOUBLE PRECISION,
-   z DOUBLE PRECISION
 );
 /*
   Payloard trigger for database updates.
