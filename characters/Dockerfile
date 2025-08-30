@@ -20,10 +20,10 @@ WORKDIR /app
 COPY character_update.cpp .
 
 # Compile the C++ file
-RUN g++ -o character character_update.cpp -lpqxx -lpq -lcurl
+RUN g++ -o characters character_update.cpp -lpqxx -lpq -lcurl
 
 # Add a cron job to run the program every hour
-RUN echo "0 * * * * root /app/character >> /app/output.log 2>&1" > /etc/cron.d/character-cron
+RUN echo "0 * * * * root /app/characters >> /app/output.log 2>&1" > /etc/cron.d/characters-cron
 
 # Give execution rights to cron job
 RUN chmod 0644 /etc/cron.d/character-cron
