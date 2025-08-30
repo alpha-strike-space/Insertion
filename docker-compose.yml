@@ -16,8 +16,8 @@ services:
     networks:
       - postgres-network
   # Pull new mails every five minutes from Mud Index.
-  kill_proxy:
-    build: ./kill
+  kills_proxy:
+    build: ./kills
     container_name: running_kills
     dns:
       - 8.8.8.8
@@ -53,7 +53,7 @@ services:
       - postgresql_proxy
         # Pull new tribes and update characters once a day
   systems_proxy:
-    build: ./system
+    build: ./systems
     container_name: running_systems
     dns:
       - 8.8.8.8
