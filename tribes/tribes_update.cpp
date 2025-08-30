@@ -36,7 +36,7 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
 int main() {
     try {
         // Postgres pointer.
-        pqxx::connection C("dbname= user= password= host= port=");
+        pqxx::connection C(/*"dbname= user= password= host= port="*/);
         if (C.is_open()) {
             std::cout << "Opened database successfully: " << C.dbname() << std::endl;
         } else {
