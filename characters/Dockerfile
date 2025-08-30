@@ -26,7 +26,7 @@ RUN g++ -o characters character_update.cpp -lpqxx -lpq -lcurl
 RUN echo "0 * * * * root /app/characters >> /app/output.log 2>&1" > /etc/cron.d/characters-cron
 
 # Give execution rights to cron job
-RUN chmod 0644 /etc/cron.d/character-cron
+RUN chmod 0644 /etc/cron.d/characters-cron
 
 # Start the cron service when the container runs
 CMD ["cron", "-f"]
