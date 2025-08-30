@@ -39,9 +39,9 @@ set(SOURCES
     character_update.cpp
 )
 # Put together
-add_executable(character ${SOURCES})
+add_executable(characters ${SOURCES})
 # Includes from dependencies
-target_include_directories(character PRIVATE
+target_include_directories(characters PRIVATE
     ${nlohmann_json_SOURCE_DIR}/single_include
     ${libpqxx_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -55,7 +55,7 @@ else()
     set(PQXX_TARGET pqxx)
 endif()
 # Link all libraries
-target_link_libraries(character PRIVATE
+target_link_libraries(characters PRIVATE
     nlohmann_json::nlohmann_json
     ${PQXX_TARGET}
     ${PostgreSQL_LIBRARIES}
