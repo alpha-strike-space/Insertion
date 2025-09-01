@@ -77,6 +77,8 @@ ON incident (to_timestamp((time_stamp - 116444736000000000) / 10000000.0));
 /*
   Precomputed index to speed up requests regarding name search for totals.
 */
+CREATE INDEX idx_tribes_name ON tribes(name);
+CREATE INDEX idx_trbies_id ON tribes(id);
 CREATE INDEX idx_character_tribe_id ON characters(tribe_id);
 CREATE INDEX idx_character_name ON characters(name);
 CREATE INDEX idx_incident_killer_id ON incident (killer_id);
