@@ -13,7 +13,7 @@ CREATE TABLE characters (
     address BYTEA PRIMARY KEY, -- blockchain address
     name VARCHAR(255),
     id NUMERIC(78) UNIQUE,            
-    tribe_id BIGINT REFERENCES tribe(id)  -- tribe_id may be nullable
+    tribe_id BIGINT REFERENCES tribes(id)  -- tribe_id may be nullable
 );
 /*
   Create systems table.
