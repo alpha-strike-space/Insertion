@@ -3,7 +3,7 @@
 */
 CREATE TABLE tribes (
     id BIGINT PRIMARY KEY,
-    tribe_url TEXT,
+    url TEXT,
     name TEXT
 );
 /*
