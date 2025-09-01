@@ -1,7 +1,7 @@
 /*
   Tribe table, includes relevant id, url, and name.
 */
-CREATE TABLE tribe (
+CREATE TABLE tribes (
     id BIGINT PRIMARY KEY,
     tribe_url TEXT,
     name TEXT
@@ -9,7 +9,7 @@ CREATE TABLE tribe (
 /*
   Character table
 */
-CREATE TABLE character (
+CREATE TABLE characters (
     address BYTEA PRIMARY KEY, -- blockchain address
     name VARCHAR(255),
     id NUMERIC(78) UNIQUE,            
@@ -77,6 +77,8 @@ ON incident (to_timestamp((time_stamp - 116444736000000000) / 10000000.0));
 /*
   Precomputed index to speed up requests regarding name search for totals.
 */
+CREATE INDEX idx_character_tribe_id ON characters(tribe_id);
+CREATE INDEX idx_character_name ON characters(name);
 CREATE INDEX idx_incident_killer_id ON incident (killer_id);
 CREATE INDEX idx_incident_victim_id ON incident (victim_id);
 CREATE INDEX idx_incident_solar_system_id ON incident (solar_system_id);
