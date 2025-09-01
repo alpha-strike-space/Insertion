@@ -30,7 +30,7 @@ Insertion is a tool for reliably inserting game events into a PostgreSQL databas
 - Uses industry-standard libraries: libpqxx (PostgreSQL), nlohmann/json (JSON), libcurl (HTTP).
 - Configurable PostgreSQL connection via environment variables.
 - Modular code for easy extension (e.g., support other event types).
-- Simple CLI interface for manual or automated use.
+- Simple CLI for manual or automated use.
 
 ## Getting Started
 
