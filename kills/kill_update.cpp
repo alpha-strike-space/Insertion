@@ -92,13 +92,11 @@ int main() {
     try {
             // Extract the timestamp string (e.g., "133970895260000000")
             std::string raw_kill_timestamp_str = row[5].get<std::string>();
-
             // Convert the string to a long long integer
             long long ldap_timestamp_100ns = std::stoll(raw_kill_timestamp_str);
-
             // Convert the 100-nanosecond LDAP time to Unix timestamp
             long long unix_ts = ldap_100ns_to_unix(ldap_timestamp_100ns);
-
+            // Killmail struct
             KillMailEntry entry{
                 row[0].get<std::string>(), // killMailId
                 row[1].get<std::string>(), // killerCharacterId
