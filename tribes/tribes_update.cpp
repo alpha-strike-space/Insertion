@@ -36,21 +36,21 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
 int main() {
     try {
         // Postgres pointer.
-        pqxx::connection C(/*"dbname= user= password= host= port="*/);
-        if (C.is_open()) {
-            std::cout << "Opened database successfully: " << C.dbname() << std::endl;
+        pqxx::connection c(/*"dbname= user= password= host= port="*/);
+        if (c.is_open()) {
+            std::cout << "Opened database successfully: " << c.dbname() << std::endl;
         } else {
             std::cerr << "Can't open database" << std::endl;
             return 1;
         }
         // Prepare statement for setting tribe_id by address
-        C.prepare("update_character_tribe",
+        c.prepare("update_character_tribe",
             "UPDATE character SET tribe_id = $2 WHERE address = $1");
         // Prepare statement for upserting tribe id, url, and name
-        C.prepare("upsert_tribe",
+        c.prepare("upsert_tribe",
             "INSERT INTO tribe (id, tribe_url, name) VALUES ($1, $2, $3) "
             "ON CONFLICT (id) DO UPDATE SET tribe_url = EXCLUDED.tribe_url, name = EXCLUDED.name");
-        pqxx::work W(C);
+        pqxx::work W(c);
         // Pagination variables
         const int limit = 100;
         int offset = 0;
