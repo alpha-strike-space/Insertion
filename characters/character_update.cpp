@@ -56,7 +56,7 @@ int main() {
             "INSERT INTO character (id, address, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING;"
         );
         // Start offset based on database
-        int offset = get_last_offset(C);
+        int offset = get_last_offset(c);
         const int limit = 100;
         bool moreData = true;
         pqxx::work W(c);
