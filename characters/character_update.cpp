@@ -32,8 +32,8 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     return size * nmemb;
 }
 // Get the offset for the next API call, based on last inserted record/
-int get_last_offset(pqxx::connection& C) {
-    pqxx::work W(C);
+int get_last_offset(pqxx::connection& c) {
+    pqxx::work W(c);
     pqxx::result R = W.exec("SELECT COUNT(*) FROM character;"); // Get count
     int offset = R[0][0].as<int>();
     W.commit(); 
@@ -44,22 +44,22 @@ int main() {
     // Try/catch block
     try {
         // Connection pointer
-        pqxx::connection C(/*"dbname= user= password= host= port="*/);
+        pqxx::connection c(/*"dbname= user= password= host= port="*/);
         // Check that it opened
-        if (!C.is_open()) {
+        if (!c.is_open()) {
             std::cerr << "Can't open database" << std::endl;
             return 1;
         }
-        std::cout << "Opened database successfully: " << C.dbname() << std::endl;
+        std::cout << "Opened database successfully: " << c.dbname() << std::endl;
         // Prepare insert statement
-        C.prepare("insert_character",
+        c.prepare("insert_character",
             "INSERT INTO character (id, address, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING;"
         );
         // Start offset based on database
         int offset = get_last_offset(C);
         const int limit = 100;
         bool moreData = true;
-        pqxx::work W(C);
+        pqxx::work W(c);
         // Do while true, until false
         while (moreData) {
             std::string readBuffer;
