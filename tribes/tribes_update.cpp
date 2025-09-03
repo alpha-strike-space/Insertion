@@ -1,12 +1,16 @@
 #include <iostream>
 #include <pqxx/pqxx>
-#include <nlohmann/json.hpp>
-#include <curl/curl.h>
+#include <nlohmann/json.hpp> // Json serialization
+#include <curl/curl.h> // Get HTTP
 #include <sstream>
-#include <cstdlib> // For getenv
+#include <cstdlib>
 #include <string>
 #include <unordered_map>
-// Making life easy with namespace
+#include <unordered_set>
+#include <thread> // Thread management
+#include <chrono> // Sleeping
+#include <ctime>
+// Make life easy with namespace
 using json = nlohmann::json;
 // Direct Connection
 // Note when using cron jobs, profile is not sourcable. You must find a solution for sourcing the environment variables as it will not work.
@@ -27,38 +31,52 @@ using json = nlohmann::json;
            " host=" + std::string(host) +
            " port=" + std::string(port);
 }*/
-// Callback function for cURL response handling
+// Write callback to capture response
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
     ((std::string*)userp)->append((char*)contents, size * nmemb);
     return size * nmemb;
 }
+// UNIX
+long long current_unix_time() {
+    return static_cast<long long>(std::time(nullptr));
+}
 // Where everything happens
 int main() {
     try {
-        // Postgres pointer.
-        pqxx::connection c(/*"dbname= user= password= host= port="*/);
-        if (c.is_open()) {
-            std::cout << "Opened database successfully: " << c.dbname() << std::endl;
-        } else {
+        // Database connection pointer
+        pqxx::connection c(/* "dbname= user= password= host= port=" */);
+        if (!c.is_open()) {
             std::cerr << "Can't open database" << std::endl;
             return 1;
         }
-        // Prepare statement for setting tribe_id by address
-        c.prepare("update_character_tribe",
-            "UPDATE character SET tribe_id = $2 WHERE address = $1");
-        // Prepare statement for upserting tribe id, url, and name
+        std::cout << "Opened database successfully: " << c.dbname() << std::endl;
+        // Prepare all usable statements.
         c.prepare("upsert_tribe",
-            "INSERT INTO tribe (id, tribe_url, name) VALUES ($1, $2, $3) "
-            "ON CONFLICT (id) DO UPDATE SET tribe_url = EXCLUDED.tribe_url, name = EXCLUDED.name");
+            "INSERT INTO tribes (id, url, name) VALUES ($1, $2, $3) "
+            "ON CONFLICT (id) DO UPDATE SET url = EXCLUDED.url, name = EXCLUDED.name");
+        c.prepare("insert_membership_history",
+            "INSERT INTO character_tribe_membership (character_id, tribe_id, joined_at, left_at) VALUES ($1, $2, $3, NULL)");
+        c.prepare("update_membership_history_left",
+            "UPDATE character_tribe_membership SET left_at = $1 WHERE character_id = $2 AND left_at IS NULL");
+        // Work it baby XD
         pqxx::work W(c);
-        // Pagination variables
+        // Mapping addresses for faster search
+        std::unordered_map<std::string, long long> address_to_charid;
+        // Running through characters.
+        pqxx::result chars = W.exec("SELECT address, id FROM characters");
+        for (const auto& row : chars) {
+            address_to_charid[row["address"].as<std::string>()] = row["id"].as<long long>();
+        }
+        // Latest memberships, address to tribe_id
+        std::unordered_map<std::string, long long> latest_membership;
+        // Latest addresses in player owned tribes.
+        std::unordered_set<std::string> player_owned_tribe_members;
+        // Locals
         const int limit = 100;
         int offset = 0;
         bool moreData = true;
-        long long defaultTribeId = 1000167; // Clonebank 86
-        // Map address to the tribal id.
-        std::unordered_map<std::string, long long> address_to_tribe;
-        // Do until false
+        const long long defaultTribeId = 1000167; // Clonebank 86
+        // Fetcher
         while (moreData) {
             std::string readBuffer;
             CURL* curl = curl_easy_init();
@@ -70,70 +88,124 @@ int main() {
                 curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
                 CURLcode res = curl_easy_perform(curl);
                 curl_easy_cleanup(curl);
-                // If not 200, spit error.
+                // Not 200, eeeww
                 if (res != CURLE_OK) {
                     std::cerr << "cURL error: " << curl_easy_strerror(res) << std::endl;
                     return 1;
                 }
-                // Parse JSON response
+                // Start reading.
                 json response = json::parse(readBuffer);
                 if (response["data"].empty()) {
                     moreData = false;
                     break;
                 }
-                // For each tribe, fetch its members and map address to tribe id
+                // Run through each tribe.
                 for (const auto& tribe : response["data"]) {
                     long long tribeId = tribe["id"].get<long long>();
                     std::string tribeUrl = tribe["tribeUrl"].get<std::string>();
-                    // If empty, NONE
-                    if (tribeUrl.empty()) {
-                        tribeUrl = "NONE";
-                    }
+                    if (tribeUrl.empty()) tribeUrl = "NONE";
                     std::string tribeName = tribe["name"].get<std::string>();
-                    // Upsert tribe info into tribe table
+                    // Upsert tribe info
                     W.exec_prepared("upsert_tribe", tribeId, tribeUrl, tribeName);
-                    // Fetch tribe details like members
+                    // Non-default tribes.
+                    if (tribeId == defaultTribeId) { 
+                        continue; // Do NOT fetch members for default tribe
+                    }
+                    // Fetch if we have an update for player tribes.
                     std::string tribeDetailBuffer;
                     CURL* tribeCurl = curl_easy_init();
                     if (tribeCurl) {
-                        std::ostringstream tribeUrl;
-                        tribeUrl << "https://world-api-stillness.live.tech.evefrontier.com/v2/tribes/" << tribeId;
-                        curl_easy_setopt(tribeCurl, CURLOPT_URL, tribeUrl.str().c_str());
+                        std::ostringstream tribeUrlStream;
+                        tribeUrlStream << "https://world-api-stillness.live.tech.evefrontier.com/v2/tribes/" << tribeId;
+                        curl_easy_setopt(tribeCurl, CURLOPT_URL, tribeUrlStream.str().c_str());
                         curl_easy_setopt(tribeCurl, CURLOPT_WRITEFUNCTION, WriteCallback);
                         curl_easy_setopt(tribeCurl, CURLOPT_WRITEDATA, &tribeDetailBuffer);
                         CURLcode tribeRes = curl_easy_perform(tribeCurl);
                         curl_easy_cleanup(tribeCurl);
-                        // If not 200, spit error
+                        // Errors
                         if (tribeRes != CURLE_OK) {
                             std::cerr << "cURL error (tribe members): " << curl_easy_strerror(tribeRes) << std::endl;
                             continue;
                         }
-                        // Json
                         json tribeDetails = json::parse(tribeDetailBuffer);
-                        // Check to make sure we aren't empty of members
                         if (!tribeDetails.contains("members") || tribeDetails["members"].empty())
                             continue;
-                        // Go through members and get addresses.
+                        // Map addresses to tribe_id for history.
                         for (const auto& member : tribeDetails["members"]) {
                             if (member.contains("address")) {
-                                address_to_tribe[member["address"].get<std::string>()] = tribeId;
+                                std::string address = member["address"].get<std::string>();
+                                latest_membership[address] = tribeId;
+                                player_owned_tribe_members.insert(address);
                             }
                         }
                         std::cout << "Processed tribe " << tribeId << " with " << tribeDetails["members"].size() << " members." << std::endl;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(300)); // Friendly API usage
                     }
                 }
             }
             offset += limit;
         }
-        // Update character table: assign tribe_id to each address found in tribes
-        for (const auto& entry : address_to_tribe) {
-            W.exec_prepared("update_character_tribe", entry.first, entry.second);
+        // Get current time in UNIX
+        long long now_unix = current_unix_time();
+        // Find open memberships.
+        pqxx::result open_memberships = W.exec(
+            "SELECT character_id, tribe_id FROM character_tribe_membership WHERE left_at IS NULL"
+        );
+        // Map character_id to tribe_id for open memberships
+        std::unordered_map<long long, long long> open_char_tribe;
+        for (const auto& row : open_memberships) {
+            open_char_tribe[row["character_id"].as<long long>()] = row["tribe_id"].as<long long>();
         }
-        // Set default tribe_id for all characters not found in any tribe, in case we see any change in membership.
-        W.exec("UPDATE character SET tribe_id = 1000167 WHERE tribe_id IS NULL");
-        // Commit
+        // Run through any tribal membership changes.
+        for (const auto& entry : latest_membership) {
+            const std::string& address = entry.first;
+            long long api_tribe_id = entry.second;
+            // Address to char id
+            auto charid_it = address_to_charid.find(address);
+            if (charid_it == address_to_charid.end()) continue; // Unknown address
+            long long char_id = charid_it->second;
+            // Find open memberships.
+            auto open_it = open_char_tribe.find(char_id);
+            if (open_it == open_char_tribe.end()) {
+                // No open membership: joined a player-owned tribe
+                W.exec_prepared("insert_membership_history", char_id, api_tribe_id, now_unix);
+            } else if (open_it->second != api_tribe_id) {
+                // Tribe changed: close old, insert new
+                W.exec_prepared("update_membership_history_left", now_unix, char_id);
+                W.exec_prepared("insert_membership_history", char_id, api_tribe_id, now_unix);
+            }
+        }
+        // Handle those who leave player owned tribes
+        for (const auto& open : open_char_tribe) {
+            long long char_id = open.first;
+            long long tribe_id = open.second;
+            // If character is not in any player-owned tribe in API
+            bool still_member = false;
+            for (const auto& am : latest_membership) {
+                if (address_to_charid[am.first] == char_id) {
+                    still_member = true;
+                    break;
+                }
+            }
+            if (!still_member && tribe_id != defaultTribeId) {
+                // Close previous membership, i.e. those who left player-owned tribe
+                W.exec_prepared("update_membership_history_left", now_unix, char_id);
+                // Insert new membership for default tribe (Clonebank 86)
+                W.exec_prepared("insert_membership_history", char_id, defaultTribeId, now_unix);
+            }
+        }
+        // Check characters who have never had a membership record, insert default tribe.
+        for (const auto& pair : address_to_charid) {
+            std::string address = pair.first;
+            long long char_id = pair.second;
+            if (open_char_tribe.find(char_id) == open_char_tribe.end() &&
+                latest_membership.find(address) == latest_membership.end()) {
+                W.exec_prepared("insert_membership_history", char_id, defaultTribeId, now_unix);
+            }
+        }
+        // Pound the tables
         W.commit();
-        std::cout << "Character tribe assignments updated. All unassigned characters set to Clonebank 86." << std::endl;
+        std::cout << "Tribe and character membership history updated. Default tribe membership inserted after leaving player-owned tribes." << std::endl;
     } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return 1;
