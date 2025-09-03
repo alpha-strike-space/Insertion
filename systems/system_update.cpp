@@ -9,6 +9,25 @@
 #include <iomanip>
 // Make life easy with namespace.
 using json = nlohmann::json;
+// Direct Connection
+// Note when using cron jobs, profile is not sourcable. You must find a solution for sourcing the environment variables as it will not work.
+/*std::string get_direct_connection_string() {
+    const char* dbname = std::getenv("PGDIRECT_DB");
+    const char* user = std::getenv("PGDIRECT_USER");
+    const char* password = std::getenv("PGDIRECT_PASSWORD");
+    const char* host = std::getenv("PGDIRECT_HOST");
+    const char* port = std::getenv("PGDIRECT_PORT");
+
+    if (!dbname || !user || !password || !host || !port) {
+        throw std::runtime_error("Database environment variables are not set for listener. Please check your .env file.");
+    }
+
+    return "dbname=" + std::string(dbname) +
+           " user=" + std::string(user) +
+           " password=" + std::string(password) +
+           " host=" + std::string(host) +
+           " port=" + std::string(port);
+}*/
 // Solar System Structure
 struct SolarSystemEntry {
     int solarSystemId;
