@@ -12,8 +12,17 @@ CREATE TABLE tribes (
 CREATE TABLE characters (
     address BYTEA PRIMARY KEY, -- blockchain address
     name VARCHAR(255),
-    id NUMERIC(78) UNIQUE,            
-    tribe_id BIGINT REFERENCES tribes(id)  -- tribe_id may be nullable
+    id NUMERIC(78) UNIQUE,
+);
+/*
+  Character tribal membership history.
+*/
+CREATE TABLE character_tribe_membership (
+    character_id NUMERIC(78) REFERENCES characters(id),
+    tribe_id BIGINT REFERENCES tribes(id),
+    joined_at BIGINT NOT NULL,  -- UNIX timestamp (seconds since epoch)
+    left_at BIGINT NULL,        -- UNIX timestamp or NULL if still a member
+    PRIMARY KEY (character_id, tribe_id, joined_at)
 );
 /*
   Create systems table.
