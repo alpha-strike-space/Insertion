@@ -11,7 +11,8 @@
 #include <chrono> // Sleeping
 #include <ctime>
 // Make life easy with namespace
-using json = nlohmann::json;
+using json = lohmann::json;
+
 // Direct Connection
 // Note when using cron jobs, profile is not sourcable. You must find a solution for sourcing the environment variables as it will not work.
 /*std::string get_direct_connection_string() {
@@ -58,18 +59,17 @@ int main() {
             "INSERT INTO character_tribe_membership (character_id, tribe_id, joined_at, left_at) VALUES ($1, $2, $3, NULL)");
         c.prepare("update_membership_history_left",
             "UPDATE character_tribe_membership SET left_at = $1 WHERE character_id = $2 AND left_at IS NULL");
-        // Work it baby XD
         pqxx::work W(c);
-        // Mapping addresses for faster search
-        std::unordered_map<std::string, long long> address_to_charid;
-        // Running through characters.
-        pqxx::result chars = W.exec("SELECT address, id FROM characters");
+        // Map player ID (stringified numeric) to itself (for character_id)
+        std::unordered_map<std::string, std::string> playerid_to_charid;
+        pqxx::result chars = W.exec("SELECT id FROM characters");
         for (const auto& row : chars) {
-            address_to_charid[row["address"].as<std::string>()] = row["id"].as<long long>();
+            std::string playerid = row["id"].as<std::string>(); // numeric as string
+            playerid_to_charid[playerid] = playerid; // use id for character_id
         }
-        // Latest memberships, address to tribe_id
+        // Latest memberships, player id to tribe_id
         std::unordered_map<std::string, long long> latest_membership;
-        // Latest addresses in player owned tribes.
+        // Latest playerids in player owned tribes.
         std::unordered_set<std::string> player_owned_tribe_members;
         // Locals
         const int limit = 100;
@@ -88,7 +88,7 @@ int main() {
                 curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
                 CURLcode res = curl_easy_perform(curl);
                 curl_easy_cleanup(curl);
-                // Not 200, eeeww
+                // Not 200, send error
                 if (res != CURLE_OK) {
                     std::cerr << "cURL error: " << curl_easy_strerror(res) << std::endl;
                     return 1;
@@ -127,15 +127,23 @@ int main() {
                             std::cerr << "cURL error (tribe members): " << curl_easy_strerror(tribeRes) << std::endl;
                             continue;
                         }
+                        // Read json
                         json tribeDetails = json::parse(tribeDetailBuffer);
                         if (!tribeDetails.contains("members") || tribeDetails["members"].empty())
                             continue;
-                        // Map addresses to tribe_id for history.
+                        // Map playerids to tribe_id for history.
                         for (const auto& member : tribeDetails["members"]) {
-                            if (member.contains("address")) {
-                                std::string address = member["address"].get<std::string>();
-                                latest_membership[address] = tribeId;
-                                player_owned_tribe_members.insert(address);
+                            // Always use player_id (stringified numeric) for membership
+                            std::string playerid;
+                            if (member.contains("id")) {
+                                // API always gives id as a string
+                                if (member["id"].is_string()) {
+                                    playerid = member["id"].get<std::string>();
+                                } else {
+                                    playerid = member["id"].dump();
+                                }
+                                latest_membership[playerid] = tribeId;
+                                player_owned_tribe_members.insert(playerid);
                             }
                         }
                         std::cout << "Processed tribe " << tribeId << " with " << tribeDetails["members"].size() << " members." << std::endl;
@@ -152,18 +160,18 @@ int main() {
             "SELECT character_id, tribe_id FROM character_tribe_membership WHERE left_at IS NULL"
         );
         // Map character_id to tribe_id for open memberships
-        std::unordered_map<long long, long long> open_char_tribe;
+        std::unordered_map<std::string, long long> open_char_tribe;
         for (const auto& row : open_memberships) {
-            open_char_tribe[row["character_id"].as<long long>()] = row["tribe_id"].as<long long>();
+            open_char_tribe[row["character_id"].as<std::string>()] = row["tribe_id"].as<long long>();
         }
         // Run through any tribal membership changes.
         for (const auto& entry : latest_membership) {
-            const std::string& address = entry.first;
+            const std::string& playerid = entry.first;
             long long api_tribe_id = entry.second;
-            // Address to char id
-            auto charid_it = address_to_charid.find(address);
-            if (charid_it == address_to_charid.end()) continue; // Unknown address
-            long long char_id = charid_it->second;
+            // Player id to char id
+            auto charid_it = playerid_to_charid.find(playerid);
+            if (charid_it == playerid_to_charid.end()) continue; // Unknown playerid
+            std::string char_id = charid_it->second;
             // Find open memberships.
             auto open_it = open_char_tribe.find(char_id);
             if (open_it == open_char_tribe.end()) {
@@ -177,12 +185,12 @@ int main() {
         }
         // Handle those who leave player owned tribes
         for (const auto& open : open_char_tribe) {
-            long long char_id = open.first;
+            std::string char_id = open.first;
             long long tribe_id = open.second;
             // If character is not in any player-owned tribe in API
             bool still_member = false;
             for (const auto& am : latest_membership) {
-                if (address_to_charid[am.first] == char_id) {
+                if (am.first == char_id) {
                     still_member = true;
                     break;
                 }
@@ -195,11 +203,11 @@ int main() {
             }
         }
         // Check characters who have never had a membership record, insert default tribe.
-        for (const auto& pair : address_to_charid) {
-            std::string address = pair.first;
-            long long char_id = pair.second;
+        for (const auto& pair : playerid_to_charid) {
+            std::string playerid = pair.first;
+            std::string char_id = pair.second;
             if (open_char_tribe.find(char_id) == open_char_tribe.end() &&
-                latest_membership.find(address) == latest_membership.end()) {
+                latest_membership.find(playerid) == latest_membership.end()) {
                 W.exec_prepared("insert_membership_history", char_id, defaultTribeId, now_unix);
             }
         }
