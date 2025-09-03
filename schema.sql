@@ -88,7 +88,6 @@ ON incident (to_timestamp(time_stamp));
 */
 CREATE INDEX idx_tribes_name ON tribes(name);
 CREATE INDEX idx_tribes_id ON tribes(id);
-CREATE INDEX idx_character_tribe_id ON characters(tribe_id);
 CREATE INDEX idx_character_name ON characters(name);
 CREATE INDEX idx_incident_killer_id ON incident (killer_id);
 CREATE INDEX idx_incident_victim_id ON incident (victim_id);
