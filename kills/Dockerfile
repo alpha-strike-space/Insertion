@@ -22,8 +22,8 @@ COPY kill_update.cpp .
 # Compile the C++ file
 RUN g++ -o killers kill_update.cpp -lpqxx -lpq -lcurl
 
-# Add a cron job to run the program every five minutes
-RUN echo "*/5 * * * * root /app/killers >> /app/output.log 2>&1" > /etc/cron.d/killers-cron
+# Add a cron job to run the program every 15 minutes
+RUN echo "*/15 * * * * root /app/killers >> /app/output.log 2>&1" > /etc/cron.d/killers-cron
 
 # Give execution rights to cron job
 RUN chmod 0644 /etc/cron.d/killers-cron
