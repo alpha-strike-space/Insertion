@@ -12,7 +12,7 @@ CREATE TABLE tribes (
 CREATE TABLE characters (
     address BYTEA PRIMARY KEY, -- blockchain address
     name VARCHAR(255),
-    id NUMERIC(78) UNIQUE,
+    id NUMERIC(78) UNIQUE
 );
 /*
   Character tribal membership history.
