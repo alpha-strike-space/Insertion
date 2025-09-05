@@ -134,8 +134,8 @@ int main() {
     std::cout << "Parsed " << entries.size() << " killmails, inserting into database..." << std::endl;
     // Try/catch block for insertion
     try {
-        // Adjust connection string as needed for your DB
-        pqxx::connection c(/*"host= dbname= user= password="*/);
+        // Connection pointer
+        pqxx::connection c(/*"host= dbname= user= password= port="*/);
         pqxx::work txn(c);
         // Prepare the statement for efficiency
         c.prepare("insert_incident",
