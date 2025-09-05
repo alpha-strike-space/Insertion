@@ -103,7 +103,7 @@ int main() {
                     std::string address = character["address"].get<std::string>();
                     std::string name = character["name"].get<std::string>();
                     std::string address_bytes = hex_to_bytes(address); // Correctly inserting as bytes into the database.
-                    W.exec_prepared("insert_character", id, address_bytes, name);
+                    W.exec_prepared("insert_character", id, pqxx::binarystring(address_bytes), name); // Fixed string UTF-8 issue here.
                 }
             }
             offset += limit;
