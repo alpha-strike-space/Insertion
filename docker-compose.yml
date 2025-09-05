@@ -27,7 +27,7 @@ services:
       - postgres-network
     depends_on:
       - postgresql_proxy
-  # Pull new characters every hour on the hour from the World API.
+  # Pull new characters every 15 minutes from the World API.
   characters_proxy:
     build: ./characters
     container_name: running_characters
@@ -39,7 +39,7 @@ services:
       - postgres-network
     depends_on:
       - postgresql_proxy
-  # Pull new tribes and update characters once a day
+  # Pull new tribes and update characters every 15 minutes from the World API.
   tribes_proxy:
     build: ./tribes
     container_name: running_tribes
