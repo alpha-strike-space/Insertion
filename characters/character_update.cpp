@@ -34,7 +34,7 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp) {
 // Get the offset for the next API call, based on last inserted record/
 int get_last_offset(pqxx::connection& c) {
     pqxx::work W(c);
-    pqxx::result R = W.exec("SELECT COUNT(*) FROM character;"); // Get count
+    pqxx::result R = W.exec("SELECT COUNT(*) FROM characters;"); // Get count
     int offset = R[0][0].as<int>();
     W.commit(); 
     return offset;
