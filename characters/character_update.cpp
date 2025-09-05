@@ -53,7 +53,7 @@ int main() {
         std::cout << "Opened database successfully: " << c.dbname() << std::endl;
         // Prepare insert statement
         c.prepare("insert_character",
-            "INSERT INTO character (id, address, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING;"
+            "INSERT INTO characters (id, address, name) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING;"
         );
         // Start offset based on database
         int offset = get_last_offset(c);
