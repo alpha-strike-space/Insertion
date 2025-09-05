@@ -22,8 +22,8 @@ COPY  tribes_update.cpp .
 # Compile the C++ file
 RUN g++ -o tribes tribes_update.cpp -lpqxx -lpq -lcurl
 
-# Add a cron job to run the program every hour
-RUN echo "0 0 * * * root /app/tribes >> /app/output.log 2>&1" > /etc/cron.d/tribes-cron
+# Add a cron job to run the program every 15 minutes.
+RUN echo "*/15 * * * * root /app/tribes >> /app/output.log 2>&1" > /etc/cron.d/tribes-cron
 
 # Give execution rights to cron job
 RUN chmod 0644 /etc/cron.d/tribes-cron
