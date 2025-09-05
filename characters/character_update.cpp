@@ -39,6 +39,19 @@ int get_last_offset(pqxx::connection& c) {
     W.commit(); 
     return offset;
 }
+// Hex conversion to raw bytes for database.
+std::string hex_to_bytes(const std::string& hex) {
+    std::string bytes;
+    // Skip "0x" if present
+    size_t start = (hex.rfind("0x", 0) == 0) ? 2 : 0; 
+    // Properly convert the hex to raw bytes.
+    for (size_t i = start; i < hex.length(); i += 2) {
+        std::string byteString = hex.substr(i, 2);
+        char byte = (char) strtol(byteString.c_str(), nullptr, 16);
+        bytes += byte;
+    }
+    return bytes; // Send back for insertion.
+}
 // Where all the good happens
 int main() {
     // Try/catch block
@@ -89,7 +102,8 @@ int main() {
                     std::string id = character["id"].get<std::string>();
                     std::string address = character["address"].get<std::string>();
                     std::string name = character["name"].get<std::string>();
-                    W.exec_prepared("insert_character", id, address, name);
+                    std::string address_bytes = hex_to_bytes(address); // Correctly inserting as bytes into the database.
+                    W.exec_prepared("insert_character", id, address_bytes, name);
                 }
             }
             offset += limit;
