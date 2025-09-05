@@ -11,7 +11,7 @@
 #include <chrono> // Sleeping
 #include <ctime>
 // Make life easy with namespace
-using json = lohmann::json;
+using json = nlohmann::json;
 // Direct Connection
 // Note when using cron jobs, profile is not sourcable. You must find a solution for sourcing the environment variables as it will not work.
 /*std::string get_direct_connection_string() {
