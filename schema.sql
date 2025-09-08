@@ -63,11 +63,15 @@ RETURNS trigger AS $$
 DECLARE
     payload TEXT;
 BEGIN
-    -- Convert the new row to a JSON string
-    payload := row_to_json(NEW)::text;
-    -- Send the notification to the 'incident_trigger' channel with the payload
+    payload := json_build_object(
+        'id', NEW.id,
+        'victim_id', NEW.victim_id::text,
+        'killer_id', NEW.killer_id::text,
+        'loss_type', NEW.loss_type,
+        'solar_system_id', NEW.solar_system_id,
+        'time_stamp', NEW.time_stamp
+    )::text;
     PERFORM pg_notify('incident_trigger', payload);   
-    -- Return the new row so that the insertion completes normally
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
